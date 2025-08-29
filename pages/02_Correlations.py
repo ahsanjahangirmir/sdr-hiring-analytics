@@ -272,8 +272,14 @@ filtered = apply_filters(df)
 # -----------------------------
 # Compute correlations on filtered data
 # -----------------------------
-pair = filtered[[x_var, y_var]].copy()
-pair = pair.apply(pd.to_numeric, errors="coerce").dropna()
+# Include Status so we can color points when toggled on
+pair_cols = [x_var, y_var] + (["Status"] if "Status" in filtered.columns else [])
+pair = filtered[pair_cols].copy()
+pair[[x_var, y_var]] = pair[[x_var, y_var]].apply(pd.to_numeric, errors="coerce")
+pair = pair.dropna(subset=[x_var, y_var])
+
+# Toggle to color-code by Status
+show_status = st.checkbox("Show Status", value=False)
 
 if pair.empty:
     st.warning("No rows left after filtering (or selected columns are empty). Adjust filters or choose different variables.")
@@ -311,12 +317,27 @@ st.markdown(
 )
 
 # -----------------------------
-# Plotly scatter + best-fit line
+# Plotly scatter + best-fit line (with Name/Alias in hover)
 # -----------------------------
+# Build a dynamic hovertemplate that includes Name/Alias (if present) and Status (if toggled)
+hover_cols = [c for c in ["Name", "Alias"] if c in filtered.columns]
+
+def build_hovertemplate(status_label: str | None = None) -> str:
+    tpl = f"{x_var}: %{{x:.4f}}<br>{y_var}: %{{y:.4f}}"
+    for i, col in enumerate(hover_cols):
+        label = "Name" if col == "Name" else "Alias"
+        tpl += f"<br>{label}: %{{customdata[{i}]}}"
+    if status_label is not None:
+        tpl += f"<br>Status: {status_label}"
+    return tpl + "<extra></extra>"
+
+def custom_for(subdf: pd.DataFrame):
+    return filtered.loc[subdf.index, hover_cols].to_numpy() if hover_cols else None
+
 x = pair[x_var].values
 y = pair[y_var].values
 
-# best-fit line
+# Best-fit line (visual guide only)
 show_line = False
 try:
     slope, intercept = np.polyfit(x, y, 1)
@@ -327,15 +348,59 @@ except Exception:
     show_line = False
 
 fig = go.Figure()
-fig.add_trace(
-    go.Scattergl(
-        x=x, y=y,
-        mode="markers",
-        marker=dict(size=8, color=BRAND_BLUE, line=dict(width=0)),
-        name="Data points",
-        hovertemplate=f"{x_var}: %{{x:.4f}}<br>{y_var}: %{{y:.4f}}<extra></extra>",
+
+if show_status and "Status" in pair.columns:
+    st_norm = pair["Status"].astype(str).str.strip().str.lower()
+    active = pair[st_norm.eq("active")]
+    term   = pair[st_norm.eq("terminated")]
+    other  = pair[~(st_norm.eq("active") | st_norm.eq("terminated"))]
+
+    if not active.empty:
+        fig.add_trace(
+            go.Scattergl(
+                x=active[x_var], y=active[y_var],
+                mode="markers",
+                marker=dict(size=8, color="#2ecc71", line=dict(width=0)),  # green
+                name="Active",
+                customdata=custom_for(active),
+                hovertemplate=build_hovertemplate("Active"),
+            )
+        )
+    if not term.empty:
+        fig.add_trace(
+            go.Scattergl(
+                x=term[x_var], y=term[y_var],
+                mode="markers",
+                marker=dict(size=8, color="#e74c3c", line=dict(width=0)),  # red
+                name="Terminated",
+                customdata=custom_for(term),
+                hovertemplate=build_hovertemplate("Terminated"),
+            )
+        )
+    if not other.empty:
+        fig.add_trace(
+            go.Scattergl(
+                x=other[x_var], y=other[y_var],
+                mode="markers",
+                marker=dict(size=8, color="#94a3b8", line=dict(width=0)),  # gray
+                name="Other/Unknown",
+                customdata=custom_for(other),
+                hovertemplate=build_hovertemplate("Other/Unknown"),
+            )
+        )
+else:
+    # Single-color scatter (original behavior)
+    fig.add_trace(
+        go.Scattergl(
+            x=x, y=y,
+            mode="markers",
+            marker=dict(size=8, color=BRAND_BLUE, line=dict(width=0)),
+            name="Data points",
+            customdata=custom_for(pair),
+            hovertemplate=build_hovertemplate(None),
+        )
     )
-)
+
 if show_line:
     fig.add_trace(
         go.Scatter(
@@ -357,7 +422,9 @@ fig.update_layout(
 
 st.plotly_chart(fig, use_container_width=True)
 
+
 st.caption(
     "Tip: Use the sidebar to narrow the view by company history, education, tenure buckets, and job-change flags. "
-    "Correlations recompute on the filtered data only. Blue dots show individuals; the yellow line is a simple best-fit guide."
+    "Correlations recompute on the filtered data only. Blue dots show individuals (or red/green by status when toggled on); "
+    "the yellow line is a simple best-fit guide."
 )
