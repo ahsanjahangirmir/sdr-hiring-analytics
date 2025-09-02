@@ -14,7 +14,7 @@ BRAND_PURPLE = "#bb48dd"
 
 BRAND_GREEN   = "#22c55e"
 BRAND_AMBER   = "#f59e0b"
-BRAND_PINKRED = "#620332"
+BRAND_RED = "#620332"
 BRAND_MUTED   = "#94a3b8"
 
 # A gentle 3-point continuous colorscale for bubbles/heatmaps
@@ -81,14 +81,21 @@ df_of_interest = df.copy()
 def bucket_tenure(x):
     if pd.isna(x):
         return "Missing"
-    elif x < 1:
-        return "<1 yr"
+    elif x < 0.25:   # 0–3 months
+        return "0–3 months"
+    elif x < 0.5:    # 4–6 months
+        return "4–6 months"
+    elif x < 0.75:   # 7–9 months
+        return "7–9 months"
+    elif x < 1:      # 10–12 months
+        return "10–12 months"
     elif x < 2:
         return "1–2 yrs"
     elif x < 3:
         return "2–3 yrs"
     else:
         return "3+ yrs"
+
 
 def bucket_outbound(x):
     if pd.isna(x) or x == 0:
@@ -448,7 +455,7 @@ def early_churn_bar(g, title_label):
         f"Early Churn % per group — {title_label}",
         "% of hires",
         is_percent=True,
-        color_seq=[BRAND_PINKRED],         # risk: purple
+        color_seq=[BRAND_RED],         # risk: purple
     )
 
 def ideal_pct_bar(g, title_label):
