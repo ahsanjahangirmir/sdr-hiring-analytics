@@ -577,13 +577,13 @@ def section_pair(df_source, col_label, dfcol):
         with c1: 
             st.plotly_chart(bubble_chart(g, col_label), use_container_width=True)
             st.plotly_chart(mean_sql_bar(g, col_label), use_container_width=True)
-            st.plotly_chart(samples_bar(g, col_label), use_container_width=True)
             st.plotly_chart(boxplot_sql(df_source, dfcol, col_label), use_container_width=True)
+            st.plotly_chart(samples_bar(g, col_label), use_container_width=True)
         with c2: 
             st.plotly_chart(ideal_pct_bar(g, col_label), use_container_width=True)
             st.plotly_chart(mean_weeks_bar(g, col_label), use_container_width=True)
-            st.plotly_chart(early_churn_bar(g, col_label), use_container_width=True)
             st.plotly_chart(boxplot_weeks(df_source, dfcol, col_label), use_container_width=True)
+            st.plotly_chart(early_churn_bar(g, col_label), use_container_width=True)
             
 
 # 3.1 University Tier
