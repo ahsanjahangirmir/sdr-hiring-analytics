@@ -380,6 +380,18 @@ def _brandify(fig):
     )
     return fig
 
+def _filter_to_allowed_groups(df_source: pd.DataFrame, category_col: str, allowed_cats: pd.Series) -> pd.DataFrame:
+    """
+    Keep only rows whose category is in allowed_cats; if allowed_cats contains NaN,
+    also keep rows where category_col is NaN.
+    """
+    allowed = allowed_cats.dropna().astype(str).tolist()
+    mask = df_source[category_col].astype(str).isin(allowed)
+    if allowed_cats.isna().any():
+        mask = mask | df_source[category_col].isna()
+    return df_source.loc[mask].copy()
+
+
 def _sorted_bar(
     g: pd.DataFrame,
     y_col: str,
@@ -485,14 +497,36 @@ def mean_weeks_bar(g, title_label):
         color_seq=[BRAND_YELLOW],         # tenure: yellow
     )
 
-def _box_with_mean_sd(df_source: pd.DataFrame, category_col: str, value_col: str, title: str, brand_color: str):
-    # sort categories by group mean desc for stable order
-    order = (
-        df_source.groupby(category_col)[value_col]
-        .mean().sort_values(ascending=False).index.tolist()
-    )
-
+def _box_with_mean_sd(
+    df_source: pd.DataFrame,
+    category_col: str,
+    value_col: str,
+    title: str,
+    brand_color: str,
+    allowed: list | pd.Series | None = None,
+    order: list | None = None,
+):
     base = df_source[[category_col, value_col]].dropna()
+
+    # If caller provided allowed groups, filter first
+    if allowed is not None:
+        if isinstance(allowed, pd.Series):
+            allowed_series = allowed
+        else:
+            allowed_series = pd.Series(allowed)
+        base = _filter_to_allowed_groups(base, category_col, allowed_series)
+
+    # If no data after filtering, return empty fig
+    if base.empty:
+        return go.Figure()
+
+    # Category order: prefer provided 'order' (from g['Category']); else compute by mean
+    if order is None:
+        order = (
+            base.groupby(category_col)[value_col]
+            .mean().sort_values(ascending=False).index.tolist()
+        )
+
     fig = px.box(
         base, x=category_col, y=value_col, points="outliers",
         color_discrete_sequence=[brand_color],
@@ -500,7 +534,8 @@ def _box_with_mean_sd(df_source: pd.DataFrame, category_col: str, value_col: str
     )
     fig.update_xaxes(categoryorder="array", categoryarray=order, tickangle=-30)
     fig.update_layout(xaxis_title="", yaxis_title=value_col, legend_title="")
-    # means & stds
+
+    # mean ± SD overlay
     stats = base.groupby(category_col)[value_col].agg(["mean", "std"]).reindex(order)
     fig.add_trace(
         go.Scatter(
@@ -516,27 +551,34 @@ def _box_with_mean_sd(df_source: pd.DataFrame, category_col: str, value_col: str
                 thickness=1,
                 width=3,
             ),
+            # show both mean and ±SD in hover
             customdata=np.stack([stats["mean"], stats["std"]], axis=-1),
             hovertemplate="<b>%{x}</b><br>"
-                        "Mean ± SD: %{customdata[0]:.2f} ± %{customdata[1]:.2f}"
+                          "Mean ± SD: %{customdata[0]:.2f} ± %{customdata[1]:.2f}<extra></extra>",
         )
     )
 
     return _brandify(fig)
 
-def boxplot_sql(df_source: pd.DataFrame, category_col: str, title_label: str):
+
+def boxplot_sql(df_source: pd.DataFrame, category_col: str, title_label: str, allowed=None, order=None):
     return _box_with_mean_sd(
         df_source, category_col, "Avg. SQL / Week",
         f"Box Plot — Avg. SQL / Week by {title_label}",
-        BRAND_PURPLE
+        BRAND_PURPLE,
+        allowed=allowed,
+        order=order,
     )
 
-def boxplot_weeks(df_source: pd.DataFrame, category_col: str, title_label: str):
+def boxplot_weeks(df_source: pd.DataFrame, category_col: str, title_label: str, allowed=None, order=None):
     return _box_with_mean_sd(
         df_source, category_col, "Weeks Active",
         f"Box Plot — Weeks Active by {title_label}",
-        BRAND_YELLOW
+        BRAND_YELLOW,
+        allowed=allowed,
+        order=order,
     )
+
 
 def bubble_chart(g, title_label):
     g = g.copy()
@@ -571,27 +613,37 @@ def bubble_chart(g, title_label):
     )
     return fig
 
-def section_pair(df_source, col_label, dfcol): 
-    g = screen(df_source, dfcol, min_count=min_count, top_k=top_k) 
-    
-    if g.empty: 
-        st.info(f"Not enough data for {col_label} (increase Top-K / decrease Min Count).") 
-        return 
-    
+def section_pair(df_source, col_label, dfcol):
+    g = screen(df_source, dfcol, min_count=min_count, top_k=top_k)
+    if g.empty:
+        st.info(f"Not enough data for {col_label} (increase Top-K / decrease Min Count).")
+        return
+
+    # Categories allowed for this section (already min_count/top_k filtered)
+    allowed = g["Category"].astype(str).tolist()
+
     with st.expander(f"{col_label}", expanded=False):
-        st.markdown(f"# **{col_label}**") 
-        c1, c2 = st.columns(2) 
-        with c1: 
+        st.markdown(f"# **{col_label}**")
+        c1, c2 = st.columns(2)
+
+        with c1:
             st.plotly_chart(bubble_chart(g, col_label), use_container_width=True)
             st.plotly_chart(mean_sql_bar(g, col_label), use_container_width=True)
-            st.plotly_chart(boxplot_sql(df_source, dfcol, col_label), use_container_width=True)
+            st.plotly_chart(
+                boxplot_sql(df_source, dfcol, col_label, allowed=allowed),
+                use_container_width=True
+            )
             st.plotly_chart(samples_bar(g, col_label), use_container_width=True)
-        with c2: 
+
+        with c2:
             st.plotly_chart(ideal_pct_bar(g, col_label), use_container_width=True)
             st.plotly_chart(mean_weeks_bar(g, col_label), use_container_width=True)
-            st.plotly_chart(boxplot_weeks(df_source, dfcol, col_label), use_container_width=True)
+            st.plotly_chart(
+                boxplot_weeks(df_source, dfcol, col_label, allowed=allowed),
+                use_container_width=True
+            )
             st.plotly_chart(early_churn_bar(g, col_label), use_container_width=True)
-            
+ 
 
 # 3.1 University Tier
 section_pair(df_work, "University Tier", "University Tier")
