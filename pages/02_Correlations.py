@@ -33,7 +33,7 @@ def load_data() -> pd.DataFrame:
         "High School Tier","University Tier","University Graduation Year","University Major Bucket",
         "Total Years Outbound Experience","Total Years Customer Service Experience",
         "Frequent Job Changes","Frequent Job Changes Recently",
-        "Weeks Active","Avg. SQL / Week"
+        "Weeks Active","Avg. SQL / Week", "Overall Speaking Score","Composite Speaking Score"
     ]
     df = df[cols_keep].copy()
 
@@ -41,7 +41,7 @@ def load_data() -> pd.DataFrame:
     for c in [
         "Avg. SQL / Week","Weeks Active",
         "Total Years Outbound Experience","Total Years Customer Service Experience",
-        "Most Recent Company Tenure","University Graduation Year"
+        "Most Recent Company Tenure","University Graduation Year", "Overall Speaking Score","Composite Speaking Score"
     ]:
         if c in df.columns:
             df[c] = pd.to_numeric(df[c], errors="coerce")
@@ -88,6 +88,8 @@ CONTINUOUS_CHOICES = [
     "Total Years Outbound Experience",
     "Total Years Customer Service Experience",
     "Most Recent Company Tenure",
+    "Overall Speaking Score",
+    "Composite Speaking Score",
 ]
 
 def _parse_past_companies(val) -> list[str]:
