@@ -33,7 +33,7 @@ def load_data() -> pd.DataFrame:
         "High School Tier","University Tier","University Graduation Year","University Major Bucket",
         "Total Years Outbound Experience","Total Years Customer Service Experience",
         "Frequent Job Changes","Frequent Job Changes Recently",
-        "Weeks Active","Avg. SQL / Week", "Overall Speaking Score","Composite Speaking Score"
+        "Weeks Active","Avg. SQL / Week", "Overall Speaking Score","Composite Speaking Score", "Grammar Score", "Grammar Accurate Sentences (%)", "Good Word Pronunciation (%)", "Fair Word Pronunciation (%)", "Poor Word Pronunciation (%)"
     ]
     df = df[cols_keep].copy()
 
@@ -41,7 +41,7 @@ def load_data() -> pd.DataFrame:
     for c in [
         "Avg. SQL / Week","Weeks Active",
         "Total Years Outbound Experience","Total Years Customer Service Experience",
-        "Most Recent Company Tenure","University Graduation Year", "Overall Speaking Score","Composite Speaking Score"
+        "Most Recent Company Tenure","University Graduation Year", "Overall Speaking Score","Composite Speaking Score", "Grammar Score", "Grammar Accurate Sentences (%)", "Good Word Pronunciation (%)", "Fair Word Pronunciation (%)", "Poor Word Pronunciation (%)"
     ]:
         if c in df.columns:
             df[c] = pd.to_numeric(df[c], errors="coerce")
@@ -90,6 +90,7 @@ CONTINUOUS_CHOICES = [
     "Most Recent Company Tenure",
     "Overall Speaking Score",
     "Composite Speaking Score",
+    "Grammar Score", "Grammar Accurate Sentences (%)", "Good Word Pronunciation (%)", "Fair Word Pronunciation (%)", "Poor Word Pronunciation (%)"
 ]
 
 def _parse_past_companies(val) -> list[str]:
