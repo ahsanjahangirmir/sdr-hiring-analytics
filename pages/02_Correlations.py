@@ -33,7 +33,9 @@ def load_data() -> pd.DataFrame:
         "High School Tier","University Tier","University Graduation Year","University Major Bucket",
         "Total Years Outbound Experience","Total Years Customer Service Experience",
         "Frequent Job Changes","Frequent Job Changes Recently",
-        "Weeks Active","Avg. SQL / Week", "Overall Speaking Score","Composite Speaking Score", "Grammar Score", "Grammar Accurate Sentences (%)", "Good Word Pronunciation (%)", "Fair Word Pronunciation (%)", "Poor Word Pronunciation (%)"
+        "Weeks Active","Avg. SQL / Week", "Overall Speaking Score","Composite Speaking Score", "Grammar Score", "Grammar Accurate Sentences (%)", "Good Word Pronunciation (%)", "Fair Word Pronunciation (%)", "Poor Word Pronunciation (%)", 'Talent Signal', 'CCAT Raw Score', 'CCAT Percentile',
+       'CCAT Invalid', 'Game Percentile', 'EPP Percent Match', 'EPP Invalid',
+       'SalesAP Recommendation', 'SalesAP Invalid'
     ]
     df = df[cols_keep].copy()
 
@@ -41,7 +43,9 @@ def load_data() -> pd.DataFrame:
     for c in [
         "Avg. SQL / Week","Weeks Active",
         "Total Years Outbound Experience","Total Years Customer Service Experience",
-        "Most Recent Company Tenure","University Graduation Year", "Overall Speaking Score","Composite Speaking Score", "Grammar Score", "Grammar Accurate Sentences (%)", "Good Word Pronunciation (%)", "Fair Word Pronunciation (%)", "Poor Word Pronunciation (%)"
+        "Most Recent Company Tenure","University Graduation Year", "Overall Speaking Score","Composite Speaking Score", "Grammar Score", "Grammar Accurate Sentences (%)", "Good Word Pronunciation (%)", "Fair Word Pronunciation (%)", "Poor Word Pronunciation (%)", 'Talent Signal', 'CCAT Raw Score', 'CCAT Percentile',
+       'CCAT Invalid', 'Game Percentile', 'EPP Percent Match', 'EPP Invalid',
+       'SalesAP Recommendation', 'SalesAP Invalid'
     ]:
         if c in df.columns:
             df[c] = pd.to_numeric(df[c], errors="coerce")
@@ -90,7 +94,10 @@ CONTINUOUS_CHOICES = [
     "Most Recent Company Tenure",
     "Overall Speaking Score",
     "Composite Speaking Score",
-    "Grammar Score", "Grammar Accurate Sentences (%)", "Good Word Pronunciation (%)", "Fair Word Pronunciation (%)", "Poor Word Pronunciation (%)"
+    "Grammar Score", "Grammar Accurate Sentences (%)", "Good Word Pronunciation (%)", "Fair Word Pronunciation (%)", "Poor Word Pronunciation (%)", 'Talent Signal', 'CCAT Raw Score', 'CCAT Percentile',
+       'Game Percentile', 'EPP Percent Match', 
+    #    'EPP Invalid','CCAT Invalid', 
+    #    'SalesAP Recommendation', 'SalesAP Invalid'
 ]
 
 def _parse_past_companies(val) -> list[str]:
