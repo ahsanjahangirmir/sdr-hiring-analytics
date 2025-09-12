@@ -35,7 +35,7 @@ def load_data() -> pd.DataFrame:
         "Frequent Job Changes","Frequent Job Changes Recently",
         "Weeks Active","Avg. SQL / Week", "Overall Speaking Score","Composite Speaking Score", "Grammar Score", "Grammar Accurate Sentences (%)", "Good Word Pronunciation (%)", "Fair Word Pronunciation (%)", "Poor Word Pronunciation (%)", 'Talent Signal', 'CCAT Raw Score', 'CCAT Percentile',
        'CCAT Invalid', 'Game Percentile', 'EPP Percent Match', 'EPP Invalid',
-       'SalesAP Recommendation', 'SalesAP Invalid'
+       'SalesAP Recommendation', 'SalesAP Invalid', 'SalesAP Recommendation Score'
     ]
     df = df[cols_keep].copy()
 
@@ -45,7 +45,7 @@ def load_data() -> pd.DataFrame:
         "Total Years Outbound Experience","Total Years Customer Service Experience",
         "Most Recent Company Tenure","University Graduation Year", "Overall Speaking Score","Composite Speaking Score", "Grammar Score", "Grammar Accurate Sentences (%)", "Good Word Pronunciation (%)", "Fair Word Pronunciation (%)", "Poor Word Pronunciation (%)", 'Talent Signal', 'CCAT Raw Score', 'CCAT Percentile',
        'CCAT Invalid', 'Game Percentile', 'EPP Percent Match', 'EPP Invalid',
-       'SalesAP Recommendation', 'SalesAP Invalid'
+       'SalesAP Recommendation', 'SalesAP Invalid', 'SalesAP Recommendation Score'
     ]:
         if c in df.columns:
             df[c] = pd.to_numeric(df[c], errors="coerce")
@@ -95,7 +95,7 @@ CONTINUOUS_CHOICES = [
     "Overall Speaking Score",
     "Composite Speaking Score",
     "Grammar Score", "Grammar Accurate Sentences (%)", "Good Word Pronunciation (%)", "Fair Word Pronunciation (%)", "Poor Word Pronunciation (%)", 'Talent Signal', 'CCAT Raw Score', 'CCAT Percentile',
-       'Game Percentile', 'EPP Percent Match', 
+       'Game Percentile', 'EPP Percent Match', 'SalesAP Recommendation Score'
     #    'EPP Invalid','CCAT Invalid', 
     #    'SalesAP Recommendation', 'SalesAP Invalid'
 ]
